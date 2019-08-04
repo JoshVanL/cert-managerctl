@@ -22,6 +22,7 @@ type Cert struct {
 
 	Issuer Issuer
 	CRSpec CRSpec
+	Object Object
 }
 
 type Sign struct {
@@ -29,10 +30,12 @@ type Sign struct {
 
 	Issuer Issuer
 	CRSpec CRSpec
+	Object Object
 }
 
 type Object struct {
-	Name string
+	Name      string
+	Namespace string
 }
 
 type Issuer struct {

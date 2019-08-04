@@ -61,6 +61,23 @@ func requestCRSpecFlags(store *options.CRSpec, fs *pflag.FlagSet) {
 	)
 }
 
+func requestObjectFlags(store *options.Object, fs *pflag.FlagSet) {
+	fs.StringVar(
+		&store.Name,
+		"name",
+		"",
+		"The name of the Certificate Request Created. If empty it will be generated "+
+			"as 'cert-managerctl-*'",
+	)
+
+	fs.StringVar(
+		&store.Namespace,
+		"namespace",
+		"",
+		"The namespace of the Certificate Request Created.",
+	)
+}
+
 func requestCertFlags(fs *pflag.FlagSet) {
 	store := &globalFlags.Request.Cert
 
@@ -109,6 +126,7 @@ func requestCertFlags(fs *pflag.FlagSet) {
 
 	requestCRSpecFlags(&store.CRSpec, fs)
 	requestIssuerFlags(&store.Issuer, fs)
+	requestObjectFlags(&store.Object, fs)
 }
 
 func requestSignFlags(fs *pflag.FlagSet) {
@@ -123,6 +141,7 @@ func requestSignFlags(fs *pflag.FlagSet) {
 
 	requestCRSpecFlags(&store.CRSpec, fs)
 	requestIssuerFlags(&store.Issuer, fs)
+	requestObjectFlags(&store.Object, fs)
 }
 
 func init() {
