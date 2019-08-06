@@ -63,9 +63,7 @@ func (r *Request) csr(csrPEM []byte, opts *options.CROptions) error {
 	log.Info("signed certificate successfully issued")
 
 	if out := opts.CRSpec.Out; len(out) > 0 {
-		log.Infof("writing signed certificate request to %s", out)
-
-		return util.WriteFile(out, cr.Status.Certificate, 0600)
+		return util.WriteCertificateFile(out, cr.Status.Certificate)
 	}
 
 	fmt.Printf("%s", cr.Status.Certificate)

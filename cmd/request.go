@@ -11,7 +11,7 @@ import (
 
 var requestCmd = &cobra.Command{
 	Use:     "request",
-	Short:   "Request opertions on cert-manager",
+	Short:   "Request opertions on cert-manager.",
 	Aliases: []string{"req"},
 }
 
@@ -67,7 +67,7 @@ func requestObjectFlags(store *options.Object, fs *pflag.FlagSet) {
 		&store.Name,
 		"name",
 		"",
-		"The name of the Certificate Request Created. If empty it will be generated "+
+		"The name of the CertificateRequest Created. If empty it will be generated "+
 			"as 'cert-managerctl-*'",
 	)
 
@@ -76,7 +76,7 @@ func requestObjectFlags(store *options.Object, fs *pflag.FlagSet) {
 		"namespace",
 		"n",
 		"",
-		"The namespace of the Certificate Request Created.",
+		"The namespace of the CertificateRequest Created.",
 	)
 }
 

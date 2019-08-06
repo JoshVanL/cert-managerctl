@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/joshvanl/cert-managerctl/cmd/options"
@@ -46,7 +46,7 @@ func DefaultGenerateObjectMeta(opts options.Object) metav1.ObjectMeta {
 func DefaultCertDuration(d string) (*metav1.Duration, error) {
 	if len(d) == 0 {
 		return &metav1.Duration{
-			Duration: v1alpha1.DefaultCertificateDuration,
+			Duration: cmapi.DefaultCertificateDuration,
 		}, nil
 	}
 
@@ -58,4 +58,28 @@ func DefaultCertDuration(d string) (*metav1.Duration, error) {
 	return &metav1.Duration{
 		Duration: dur,
 	}, nil
+}
+
+func CertificateRequestFailed(cr *cmapi.CertificateRequest) (string, bool) {
+	for _, con := range cr.Status.Conditions {
+		if con.Reason == "Failed" {
+			return con.Message, true
+		}
+	}
+
+	return "", false
+}
+
+func CertificateRequestReady(cr *cmapi.CertificateRequest) bool {
+	readyType := cmapi.CertificateRequestConditionReady
+	readyStatus := cmapi.ConditionTrue
+
+	existingConditions := cr.Status.Conditions
+	for _, cond := range existingConditions {
+		if readyType == cond.Type && readyStatus == cond.Status {
+			return true
+		}
+	}
+
+	return false
 }

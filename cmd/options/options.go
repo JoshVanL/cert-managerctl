@@ -5,14 +5,15 @@ type Flags struct {
 	LogLevel   string
 
 	Request Request
+	Get     Get
 }
 
 type Request struct {
-	Cert Cert
-	Sign Sign
+	Cert ReqCert
+	Sign ReqSign
 }
 
-type Cert struct {
+type ReqCert struct {
 	CommonName   string
 	Organization []string
 	DNSNames     []string
@@ -26,12 +27,22 @@ type Cert struct {
 	Object Object
 }
 
-type Sign struct {
+type ReqSign struct {
 	CSR string
 
 	Issuer Issuer
 	CRSpec CRSpec
 	Object Object
+}
+
+type Get struct {
+	Cert GetCert
+}
+
+type GetCert struct {
+	Object
+	Out  string
+	Wait bool
 }
 
 type Object struct {

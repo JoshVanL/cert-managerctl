@@ -115,7 +115,7 @@ func (r *Request) Sign() error {
 	})
 }
 
-func commonName(opts *options.Cert) (string, error) {
+func commonName(opts *options.ReqCert) (string, error) {
 	if len(opts.CommonName) > 0 {
 		return opts.CommonName, nil
 	}

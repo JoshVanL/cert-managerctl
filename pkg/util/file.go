@@ -4,7 +4,14 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	log "github.com/sirupsen/logrus"
 )
+
+func WriteCertificateFile(path string, b []byte) error {
+	log.Infof("writing signed certificate request to %s", path)
+	return WriteFile(path, b, 0600)
+}
 
 func WriteFile(path string, b []byte, perm os.FileMode) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0744); err != nil {

@@ -16,6 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/joshvanl/cert-managerctl/pkg/util"
 )
 
 type Client struct {
@@ -40,6 +42,47 @@ func New(kubeconfig string) (*Client, error) {
 	}, nil
 }
 
+func (c *Client) CreateCertificateRequest(
+	cr *cmapi.CertificateRequest) (*cmapi.CertificateRequest, error) {
+	return c.cmClient.CertmanagerV1alpha1().CertificateRequests(cr.Namespace).Create(cr)
+}
+
+func (c *Client) CertificateRequest(name, ns string) (*cmapi.CertificateRequest, error) {
+	return c.cmClient.CertmanagerV1alpha1().CertificateRequests(ns).Get(name, metav1.GetOptions{})
+}
+
+func (c *Client) WaitForCertificateRequestReady(name, ns string, timeout time.Duration) (*cmapi.CertificateRequest, error) {
+	var cr *cmapi.CertificateRequest
+	err := wait.PollImmediate(time.Second, timeout,
+		func() (bool, error) {
+
+			log.Debugf("polling CertificateRequest %s/%s for ready status", name, ns)
+
+			var err error
+			cr, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(ns).Get(name, metav1.GetOptions{})
+			if err != nil {
+				return false, fmt.Errorf("error getting CertificateRequest %s: %v", name, err)
+			}
+
+			if reason, failed := util.CertificateRequestFailed(cr); failed {
+				return false, fmt.Errorf("certificate request marked as failed: %s", reason)
+			}
+
+			if !util.CertificateRequestReady(cr) {
+				return false, nil
+			}
+
+			return true, nil
+		},
+	)
+
+	if err != nil {
+		return cr, err
+	}
+
+	return cr, nil
+}
+
 func restConfig(kubeconfig string) (*rest.Config, error) {
 	if len(kubeconfig) == 0 {
 		restConfig, err := rest.InClusterConfig()
@@ -61,65 +104,4 @@ func restConfig(kubeconfig string) (*rest.Config, error) {
 	}
 
 	return restConfig, nil
-}
-
-func (c *Client) CreateCertificateRequest(
-	cr *cmapi.CertificateRequest) (*cmapi.CertificateRequest, error) {
-	return c.cmClient.CertmanagerV1alpha1().CertificateRequests(cr.Namespace).Create(cr)
-}
-
-func (c *Client) WaitForCertificateRequestReady(name, ns string, timeout time.Duration) (*cmapi.CertificateRequest, error) {
-	var cr *cmapi.CertificateRequest
-	err := wait.PollImmediate(time.Second, timeout,
-		func() (bool, error) {
-
-			log.Debugf("polling CertificateRequest %s/%s for ready status", name, ns)
-
-			var err error
-			cr, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(ns).Get(name, metav1.GetOptions{})
-			if err != nil {
-				return false, fmt.Errorf("error getting CertificateRequest %s: %v", name, err)
-			}
-
-			if reason, failed := c.crFailed(cr); failed {
-				return false, fmt.Errorf("certificate request marked as failed: %s", reason)
-			}
-
-			if !c.crReady(cr) {
-				return false, nil
-			}
-
-			return true, nil
-		},
-	)
-
-	if err != nil {
-		return cr, err
-	}
-
-	return cr, nil
-}
-
-func (c *Client) crFailed(cr *cmapi.CertificateRequest) (string, bool) {
-	for _, con := range cr.Status.Conditions {
-		if con.Reason == "Failed" {
-			return con.Message, true
-		}
-	}
-
-	return "", false
-}
-
-func (c *Client) crReady(cr *cmapi.CertificateRequest) bool {
-	readyType := cmapi.CertificateRequestConditionReady
-	readyStatus := cmapi.ConditionTrue
-
-	existingConditions := cr.Status.Conditions
-	for _, cond := range existingConditions {
-		if readyType == cond.Type && readyStatus == cond.Status {
-			return true
-		}
-	}
-
-	return false
 }
