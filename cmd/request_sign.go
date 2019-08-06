@@ -7,10 +7,9 @@ import (
 	"github.com/joshvanl/cert-managerctl/pkg/request"
 )
 
-var requestCertCmd = &cobra.Command{
-	Use:     "certicate",
-	Short:   "Request a signed certificate from cert-manager.",
-	Aliases: []string{"cert"},
+var requestSignCmd = &cobra.Command{
+	Use:   "sign",
+	Short: "Request a signed certificate from cert-manager using a raw x509 encoded certificate siging request.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client, err := client.New(globalFlags.Kubeconfig)
 		if err != nil {
@@ -18,11 +17,11 @@ var requestCertCmd = &cobra.Command{
 		}
 
 		request := request.New(client, &globalFlags.Request)
-		return request.Cert()
+		return request.Sign()
 	},
 }
 
 func init() {
-	requestCertFlags(requestCertCmd.PersistentFlags())
-	requestCmd.AddCommand(requestCertCmd)
+	requestSignFlags(requestSignCmd.PersistentFlags())
+	requestCmd.AddCommand(requestSignCmd)
 }

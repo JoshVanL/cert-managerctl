@@ -7,23 +7,16 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"errors"
-	"fmt"
-	"time"
-
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
+	"io/ioutil"
 
 	"github.com/joshvanl/cert-managerctl/cmd/options"
-	"github.com/joshvanl/cert-managerctl/pkg/client"
 	"github.com/joshvanl/cert-managerctl/pkg/util"
 )
 
-func Cert(client *client.Client, opts *options.Cert) error {
-	uris, err := util.ParseURIs(opts.URIs)
-	if err != nil {
-		return err
-	}
+func (r Request) Cert() error {
+	opts := &r.opts.Cert
 
-	duration, err := util.DefaultCertDuration(opts.CRSpec.Duration)
+	uris, err := util.ParseURIs(opts.URIs)
 	if err != nil {
 		return err
 	}
@@ -56,38 +49,11 @@ func Cert(client *client.Client, opts *options.Cert) error {
 		return err
 	}
 
-	cr := &cmapi.CertificateRequest{
-		ObjectMeta: util.DefaultGenerateObjectMeta(opts.Object),
-		Spec: cmapi.CertificateRequestSpec{
-			CSRPEM:   csrPEM,
-			IsCA:     opts.CRSpec.IsCA,
-			Duration: duration,
-			IssuerRef: cmapi.ObjectReference{
-				Name:  opts.Issuer.Name,
-				Kind:  opts.Issuer.Kind,
-				Group: opts.Issuer.Group,
-			},
-		},
-	}
-
-	cr, err = client.CreateCertificateRequest(cr)
-	if err != nil {
-		return err
-	}
-
-	cr, err = client.WaitForCertificateRequestReady(
-		cr.Name, cr.Namespace, time.Second*30)
-	if err != nil {
-		return err
-	}
-
-	if out := opts.CRSpec.Out; len(out) > 0 {
-		util.WriteFile(out, cr.Status.Certificate, 0600)
-	} else {
-		fmt.Printf("%s", cr.Status.Certificate)
-	}
-
-	return nil
+	return r.csr(csrPEM, &options.CROptions{
+		Issuer: opts.Issuer,
+		CRSpec: opts.CRSpec,
+		Object: opts.Object,
+	})
 }
 
 func privateKey(keyPath string) (*util.KeyBundle, error) {
@@ -128,6 +94,25 @@ func privateKey(keyPath string) (*util.KeyBundle, error) {
 	}
 
 	return keyBundle, nil
+}
+
+func (r *Request) Sign() error {
+	opts := r.opts.Sign
+
+	if len(opts.CSR) == 0 {
+		return errors.New("csr path file location is empty")
+	}
+
+	csrPEM, err := ioutil.ReadFile(opts.CSR)
+	if err != nil {
+		return err
+	}
+
+	return r.csr(csrPEM, &options.CROptions{
+		Issuer: opts.Issuer,
+		CRSpec: opts.CRSpec,
+		Object: opts.Object,
+	})
 }
 
 func commonName(opts *options.Cert) (string, error) {

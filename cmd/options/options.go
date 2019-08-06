@@ -49,3 +49,9 @@ type CRSpec struct {
 	IsCA     bool
 	Out      string
 }
+
+type CROptions struct {
+	Issuer Issuer
+	CRSpec CRSpec
+	Object Object
+}

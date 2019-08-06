@@ -73,25 +73,25 @@ func (c *Client) WaitForCertificateRequestReady(name, ns string, timeout time.Du
 	err := wait.PollImmediate(time.Second, timeout,
 		func() (bool, error) {
 			var err error
-			//log.Logf("Waiting for CertificateRequest %s to be ready", name)
 			cr, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(ns).Get(name, metav1.GetOptions{})
 			if err != nil {
 				return false, fmt.Errorf("error getting CertificateRequest %s: %v", name, err)
 			}
+
 			isReady := apiutil.CertificateRequestHasCondition(cr, cmapi.CertificateRequestCondition{
 				Type:   cmapi.CertificateRequestConditionReady,
 				Status: cmapi.ConditionTrue,
 			})
 			if !isReady {
-				//log.Logf("Expected CertificateReques to have Ready condition 'true' but it has: %v", cr.Status.Conditions)
 				return false, nil
 			}
+
 			return true, nil
 		},
 	)
 
 	if err != nil {
-		return nil, err
+		return cr, err
 	}
 
 	return cr, nil
