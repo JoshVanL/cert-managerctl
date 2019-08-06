@@ -81,7 +81,7 @@ func requestObjectFlags(store *options.Object, fs *pflag.FlagSet) {
 }
 
 func requestCertFlags(fs *pflag.FlagSet) {
-	store := &globalFlags.Request.Cert
+	store := &flags.Request.Cert
 
 	fs.StringVar(
 		&store.CommonName,
@@ -132,7 +132,7 @@ func requestCertFlags(fs *pflag.FlagSet) {
 }
 
 func requestSignFlags(fs *pflag.FlagSet) {
-	store := &globalFlags.Request.Sign
+	store := &flags.Request.Sign
 
 	fs.StringVar(
 		&store.CSR,
@@ -147,5 +147,5 @@ func requestSignFlags(fs *pflag.FlagSet) {
 }
 
 func init() {
-	RootCmd.AddCommand(requestCmd)
+	rootCmd.AddCommand(requestCmd)
 }

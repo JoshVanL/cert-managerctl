@@ -9,9 +9,9 @@ import (
 	// plugins.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	apiutil "github.com/jetstack/cert-manager/pkg/api/util"
 	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	cmclient "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
+	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
@@ -72,17 +72,20 @@ func (c *Client) WaitForCertificateRequestReady(name, ns string, timeout time.Du
 	var cr *cmapi.CertificateRequest
 	err := wait.PollImmediate(time.Second, timeout,
 		func() (bool, error) {
+
+			log.Debugf("polling CertificateRequest %s/%s for ready status", name, ns)
+
 			var err error
 			cr, err = c.cmClient.CertmanagerV1alpha1().CertificateRequests(ns).Get(name, metav1.GetOptions{})
 			if err != nil {
 				return false, fmt.Errorf("error getting CertificateRequest %s: %v", name, err)
 			}
 
-			isReady := apiutil.CertificateRequestHasCondition(cr, cmapi.CertificateRequestCondition{
-				Type:   cmapi.CertificateRequestConditionReady,
-				Status: cmapi.ConditionTrue,
-			})
-			if !isReady {
+			if reason, failed := c.crFailed(cr); failed {
+				return false, fmt.Errorf("certificate request marked as failed: %s", reason)
+			}
+
+			if !c.crReady(cr) {
 				return false, nil
 			}
 
@@ -95,4 +98,28 @@ func (c *Client) WaitForCertificateRequestReady(name, ns string, timeout time.Du
 	}
 
 	return cr, nil
+}
+
+func (c *Client) crFailed(cr *cmapi.CertificateRequest) (string, bool) {
+	for _, con := range cr.Status.Conditions {
+		if con.Reason == "Failed" {
+			return con.Message, true
+		}
+	}
+
+	return "", false
+}
+
+func (c *Client) crReady(cr *cmapi.CertificateRequest) bool {
+	readyType := cmapi.CertificateRequestConditionReady
+	readyStatus := cmapi.ConditionTrue
+
+	existingConditions := cr.Status.Conditions
+	for _, cond := range existingConditions {
+		if readyType == cond.Type && readyStatus == cond.Status {
+			return true
+		}
+	}
+
+	return false
 }

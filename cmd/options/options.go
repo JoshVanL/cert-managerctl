@@ -2,6 +2,7 @@ package options
 
 type Flags struct {
 	Kubeconfig string
+	LogLevel   string
 
 	Request Request
 }
