@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"time"
 
@@ -14,14 +15,18 @@ import (
 )
 
 // EncodeCSR calls x509.CreateCertificateRequest to sign the given CSR template.
-// It returns a DER encoded signed CSR.
+// It returns a PEM encoded signed CSR.
 func EncodeCSR(template *x509.CertificateRequest, key crypto.Signer) ([]byte, error) {
 	derBytes, err := x509.CreateCertificateRequest(rand.Reader, template, key)
 	if err != nil {
 		return nil, fmt.Errorf("error creating x509 certificate: %s", err.Error())
 	}
 
-	return derBytes, nil
+	csrPEM := pem.EncodeToMemory(&pem.Block{
+		Type: "CERTIFICATE REQUEST", Bytes: derBytes,
+	})
+
+	return csrPEM, nil
 }
 
 func DefaultGenerateObjectMeta(opts options.Object) metav1.ObjectMeta {

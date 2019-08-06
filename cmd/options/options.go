@@ -39,9 +39,9 @@ type Object struct {
 }
 
 type Issuer struct {
-	IssuerName  string
-	IssuerKind  string
-	IssuerGroup string
+	Name  string
+	Kind  string
+	Group string
 }
 
 type CRSpec struct {

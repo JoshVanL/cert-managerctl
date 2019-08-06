@@ -17,21 +17,21 @@ var requestCmd = &cobra.Command{
 
 func requestIssuerFlags(store *options.Issuer, fs *pflag.FlagSet) {
 	fs.StringVar(
-		&store.IssuerName,
+		&store.Name,
 		"issuer-name",
 		"",
 		"The target issuer name to issuer the certificate.",
 	)
 
 	fs.StringVar(
-		&store.IssuerKind,
+		&store.Kind,
 		"issuer-kind",
 		"Issuer",
 		"The target issuer kind to sign the certificate.",
 	)
 
 	fs.StringVar(
-		&store.IssuerGroup,
+		&store.Group,
 		"issuer-group",
 		certmanager.GroupName,
 		"The target API group name the issuer belongs to",
@@ -53,9 +53,10 @@ func requestCRSpecFlags(store *options.CRSpec, fs *pflag.FlagSet) {
 		"The signed certifcate will be marked as a CA.",
 	)
 
-	fs.StringVar(
+	fs.StringVarP(
 		&store.Out,
 		"out",
+		"o",
 		"/etc/cert-manager/cert.pem",
 		"The output file location to store the signed certificate. If empty, output to Stdout.",
 	)
@@ -70,9 +71,10 @@ func requestObjectFlags(store *options.Object, fs *pflag.FlagSet) {
 			"as 'cert-managerctl-*'",
 	)
 
-	fs.StringVar(
+	fs.StringVarP(
 		&store.Namespace,
 		"namespace",
+		"n",
 		"",
 		"The namespace of the Certificate Request Created.",
 	)
@@ -120,8 +122,8 @@ func requestCertFlags(fs *pflag.FlagSet) {
 		&store.Key,
 		"key",
 		"/etc/cert-manager/key.pem",
-		"The input key file location used to generate the CSR. If unset, an RSA "+
-			"2048 private key will be generated and stored at this location",
+		"The input key file location used to generate the CSR. If file is empty, an "+
+			"RSA 2048 private key will be generated and stored at this location",
 	)
 
 	requestCRSpecFlags(&store.CRSpec, fs)
